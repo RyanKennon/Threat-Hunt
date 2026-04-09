@@ -992,7 +992,7 @@ EmberForgeX_CL
 
 **Evidence:**  
 <p align="center">
-  <img width="955" height="168" alt="Q28" src="https://github.com/user-attachments/assets/e3a62742-4a7f-46aa-b0b3-42d1628fa715" />
+  <img width="1169" height="170" alt="Q28 redo" src="https://github.com/user-attachments/assets/9a35a3fc-7257-48a1-8ed7-e821dd7edc95" />
 </p>
 
 **Why This Matters:**  
@@ -1122,15 +1122,19 @@ I searched EventCode 7045 raw event data on the server `EC2AMAZ-16V3AU4` for ran
 **KQL Query:**  
 ```kql
 EmberForgeX_CL
+| where TimeGenerated between (datetime(2026-01-01) .. now())
 | where EventCode_s == "7045"
 | where Computer contains "16V3AU4"
-| project UtcTime_s, Computer, Raw_s
+| parse Raw_s with * "ServiceName'>" ServiceName "<" *
+| parse Raw_s with * "/C " ActualCommand " ^&gt;" *
+| where ServiceName != "AnyDesk Service"
+| project UtcTime_s, Computer, ServiceName, ActualCommand
 | sort by UtcTime_s asc
 ```
 
 **Evidence:**  
 <p align="center">
-  <img width="1132" height="175" alt="Q32" src="https://github.com/user-attachments/assets/c9ae0728-3ec2-49b8-b0c9-e2f7b3e4cb7d" />
+  <img width="350" height="323" alt="Q32 redo" src="https://github.com/user-attachments/assets/26d7565d-baa1-41e0-8932-d83190cf91aa" />
 </p>
 
 **Why This Matters:**  
@@ -1155,16 +1159,20 @@ I examined the earliest EventCode 7045 service creation on the server `EC2AMAZ-1
 **KQL Query:**  
 ```kql
 EmberForgeX_CL
+| where TimeGenerated between (datetime(2026-01-01) .. now())
 | where EventCode_s == "7045"
 | where Computer contains "16V3AU4"
-| extend EventTime = todatetime(UtcTime_s)
-| project EventTime, Computer, Raw_s
-| sort by EventTime asc
+| parse Raw_s with * "ServiceName'>" ServiceName "<" *
+| parse Raw_s with * "echo " FirstCommand " ^&gt;" *
+| where ServiceName != "AnyDesk Service"
+| project UtcTime_s, Computer, ServiceName, FirstCommand
+| sort by UtcTime_s asc
+| take 1
 ```
 
 **Evidence:**  
 <p align="center">
-  <img width="1402" height="178" alt="Q33" src="https://github.com/user-attachments/assets/42f746fe-3123-4928-9070-5c29bc6c6ec0" />
+  <img width="598" height="161" alt="Q33 redo" src="https://github.com/user-attachments/assets/29999a0d-7889-4cf4-b5ad-0eae140adb20" />
 </p>
 
 **Why This Matters:**  
@@ -1189,15 +1197,18 @@ I searched EventCode 4625 failed logon events on the server `EC2AMAZ-16V3AU4`. M
 **KQL Query:**  
 ```kql
 EmberForgeX_CL
+| where TimeGenerated between (datetime(2026-01-01) .. now())
 | where EventCode_s == "4625"
 | where Computer contains "16V3AU4"
-| project UtcTime_s, Computer, Caller_User_Name_s, src_ip_s, LogonType_s, Raw_s
-| sort by UtcTime_s asc
+| parse Raw_s with * "AuthenticationPackageName'>" AuthProtocol "<" *
+| parse Raw_s with * "IpAddress'>" SourceIP "<" *
+| summarize FailureCount = count() by Computer, AuthProtocol, SourceIP
+| sort by FailureCount desc
 ```
 
 **Evidence:**  
 <p align="center">
-  <img width="1419" height="265" alt="Q34" src="https://github.com/user-attachments/assets/bff3bd3d-4954-4a83-8c62-d5180ea113e2" />
+  <img width="756" height="70" alt="Q34 redo" src="https://github.com/user-attachments/assets/f8d98d3e-d3e7-4e09-a0fc-4e912213cbe1" />
 </p>
 
 **Why This Matters:**  

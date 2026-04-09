@@ -16,7 +16,7 @@ The custom log table `EmberForgeX_CL` was identified in the `law-cyber-range` wo
 
 **Evidence:**  
 <p align="center">
-  <img width="274" height="425" alt="Q00" src="https://github.com/user-attachments/assets/4a4cd0a9-a772-4dfd-ae76-70ca6d0f5b1e" />
+  <img width="274" height="425" alt="Untitled Diagram-Page-1 drawio" src="https://github.com/user-attachments/assets/0fbc6c42-2bde-4cd3-b145-6d39359af97c" />
 </p>
 
 **Why This Matters:**  
@@ -1556,7 +1556,7 @@ EmberForgeX_CL
 
 **Evidence:**  
 <p align="center">
-  <img width="1235" height="227" alt="Q44" src="https://github.com/user-attachments/assets/ea52f7c3-a14d-4bf7-aa81-8c769c53cb16" />
+  <img width="1235" height="227" alt="Untitled Diagram-Page-2 drawio" src="https://github.com/user-attachments/assets/31931c27-aed4-4fb2-964d-cb2dde2a93b0" />
 </p>
 
 **Why This Matters:**  

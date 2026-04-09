@@ -1,27 +1,60 @@
 # Threat-Hunt
 
-### Flag 1: Target Directory – Source of Stolen Data
+### Flag 0: Environment Access – Custom Log Table
+
 **Objective:**  
-Identify the directory that was the source of stolen data by analyzing compression commands used by the attacker to package files before exfiltration.  
+Confirm access to the investigation environment by identifying the custom log table containing all Sysmon and Windows Security telemetry for the EmberForge investigation.
+
 **Flag Value:**  
-C:\GameDev  
+`EmberForgeX_CL`
+
 **What to Hunt:**  
-Look for compression tool usage in process creation events (EventCode 1), particularly Compress-Archive, 7z, WinRAR, or similar utilities. The -Path argument reveals the source directory being targeted.  
+Navigate to the Logs section in Microsoft Sentinel and look under Custom Logs in the left panel to identify the table containing the investigation data.
+
 **Detection Strategy:**  
-I filtered process creation events for known compression tools and sorted chronologically to identify what data was being packaged. A PowerShell Compress-Archive command revealed the attacker archiving the entire C:\GameDev directory into a zip file staged at C:\Users\Public\gamedev.zip.  
+The custom log table `EmberForgeX_CL` was identified in the `law-cyber-range` workspace under Custom Logs. Access was confirmed by running a basic query against the table and verifying telemetry was present within the investigation window.
+
+**Evidence:**  
+<p align="center">
+  <img width="274" height="425" alt="Q00" src="https://github.com/user-attachments/assets/4a4cd0a9-a772-4dfd-ae76-70ca6d0f5b1e" />
+</p>
+
+**Why This Matters:**  
+The `_CL` suffix denotes a Custom Log table ingested via API in Azure Monitor and Microsoft Sentinel. All Sysmon and Windows Security telemetry for the three EmberForge hosts is contained within this single table, making it the starting point for every query in this investigation.
+
+---
+
+ ### Flag 1: Target Directory – Source of Stolen Data
+
+**Objective:**  
+Identify the directory that was the source of stolen data by analyzing compression commands used by the attacker to package files before exfiltration.
+
+**Flag Value:**  
+`C:\GameDev`
+
+**What to Hunt:**  
+Look for compression tool usage in process creation events (EventCode 1), particularly `Compress-Archive`, `7z`, `WinRAR`, or similar utilities. The `-Path` argument reveals the source directory being targeted.
+
+**Detection Strategy:**  
+I filtered process creation events for known compression tools and sorted chronologically to identify what data was being packaged. A PowerShell `Compress-Archive` command revealed the attacker archiving the entire `C:\GameDev` directory into a zip file staged at `C:\Users\Public\gamedev.zip`.
+
 **KQL Query:**  
-`EmberForgeX_CL
+```kql
+EmberForgeX_CL
 | where todatetime(UtcTime_s) between (datetime(2026-01-30 21:00) .. datetime(2026-01-31 00:00))
 | where EventCode_s == "1"
 | where CommandLine_s has_any ("Compress-Archive", "7z", "zip", "rar", "tar")
 | project UtcTime_s, Computer, User_s, Image_s, CommandLine_s, ParentImage_s
-| sort by UtcTime_s asc`  
+| sort by UtcTime_s asc
+```
+
 **Evidence:**  
+<p align="center">
+  <img width="892" height="283" alt="Q01" src="https://github.com/user-attachments/assets/eb0b5b30-a73b-4fad-ad4e-51d25f1cd9af" />
+</p>
 
 **Why This Matters:**  
-The `Compress-Archive` command with `-Path C:\GameDev` confirms the attacker 
-specifically targeted the game development directory — likely containing source 
-code, assets, and proprietary project files.  
+The `Compress-Archive` command with `-Path C:\GameDev` confirms the attacker specifically targeted the game development directory — likely containing source code, assets, and proprietary project files. The archive was immediately staged at `C:\Users\Public\gamedev.zip` for exfiltration, indicating a deliberate and pre-planned data theft operation.
 
 ---
 
@@ -50,7 +83,9 @@ EmberForgeX_CL
 ```
 
 **Evidence:**  
-*(Insert Sentinel screenshot here)*
+<p align="center">
+  <img width="761" height="282" alt="Q02" src="https://github.com/user-attachments/assets/d1e19236-8eff-479f-9c06-35832c2936fd" />
+</p>
 
 **Why This Matters:**  
 `rclone.exe` is a legitimate cloud sync tool increasingly abused by threat actors for exfiltration because it blends in with normal cloud traffic. The `mega:exfil` argument confirms MEGA cloud storage as the destination, and the pre-staged config file at `C:\Users\Public\rclone.conf` suggests the attacker planned this exfiltration in advance. 
@@ -82,7 +117,9 @@ EmberForgeX_CL
 ```
 
 **Evidence:**  
-*(Insert Sentinel screenshot here)*
+<p align="center">
+  <img width="1104" height="323" alt="Q3" src="https://github.com/user-attachments/assets/2baa5478-b54c-498e-86a8-9e267cd1b0d5" />
+</p>
 
 **Why This Matters:**  
 Passing credentials directly in command line arguments is a significant OPSEC failure. Sysmon EventCode 1 captures full command lines, meaning the attacker's MEGA account `jwilson.vhr@proton.me` and password were logged in plaintext. This provides direct attribution evidence and an immediate IOC for law enforcement or further investigation.
@@ -113,7 +150,9 @@ EmberForgeX_CL
 ```
 
 **Evidence:**  
-*(Insert Sentinel screenshot here)*
+<p align="center">
+  <img width="994" height="170" alt="Q4" src="https://github.com/user-attachments/assets/ffb66b54-6047-4400-8930-b1bb581286ce" />
+</p>
 
 **Why This Matters:**  
 The ntds.dit file contains the hashed credentials of every account in the Active Directory domain. Accessing it via volume shadow copy is a well-documented technique that bypasses the OS lock on the file. A successful extraction means the attacker potentially has access to every domain account, making this a full domain compromise.
@@ -145,7 +184,9 @@ EmberForgeX_CL
 ```
 
 **Evidence:**  
-*(Insert Sentinel screenshot here)*
+<p align="center">
+  <img width="770" height="165" alt="Q5" src="https://github.com/user-attachments/assets/6e0b120b-4af9-4a4e-be07-cce16d3cf91c" />
+</p>
 
 **Why This Matters:**  
 `rclone.exe` is a legitimate open source cloud sync tool increasingly abused by threat actors for exfiltration because it supports dozens of cloud providers and blends in with normal network traffic. Its execution from `C:\Users\Public` under `NT AUTHORITY\SYSTEM` with a parent process of `update.exe` confirms it was attacker-deployed rather than legitimately installed.
@@ -177,7 +218,9 @@ EmberForgeX_CL
 ```
 
 **Evidence:**  
-*(Insert Sentinel screenshot here)*
+<p align="center">
+  <img width="783" height="61" alt="Q6" src="https://github.com/user-attachments/assets/305a428f-bb1c-4bc3-b377-3d6672d8e48c" />
+</p>
 
 **Why This Matters:**  
 Correlating process activity with network connections confirms the exfiltration path end-to-end. The use of port 443 over HTTPS to MEGA's API infrastructure means the traffic would blend in with normal encrypted web traffic, making it difficult to detect without process-level telemetry like Sysmon EventCode 3.
@@ -209,7 +252,9 @@ EmberForgeX_CL
 ```
 
 **Evidence:**  
-*(Insert Sentinel screenshot here)*
+<p align="center">
+  <img width="928" height="145" alt="Q7" src="https://github.com/user-attachments/assets/b1112e22-3176-49d0-92b7-98befe64157a" />
+</p>
 
 **Why This Matters:**  
 Passing credentials directly in command line arguments is a significant OPSEC failure. Windows logs full command lines via Sysmon EventCode 1, meaning any credential passed as an argument is captured in plaintext. This exposed password combined with the email from Flag 3 provides direct attribution evidence and actionable IOCs for further investigation.
@@ -241,7 +286,9 @@ EmberForgeX_CL
 ```
 
 **Evidence:**  
-*(Insert Sentinel screenshot here)*
+<p align="center">
+  <img width="744" height="178" alt="Q8" src="https://github.com/user-attachments/assets/2e1d1d28-6f3e-4d11-92ac-f034a25f42b8" />
+</p>
 
 **Why This Matters:**  
 Living Off The Land techniques abuse built-in OS tools to avoid triggering alerts based on known malicious binaries. `Compress-Archive` is a native PowerShell cmdlet meaning no additional tools need to be downloaded, reducing the attacker's footprint. Detection requires behavioural analysis of what is being compressed and from where, rather than signature-based detection.
@@ -273,7 +320,9 @@ EmberForgeX_CL
 ```
 
 **Evidence:**  
-*(Insert Sentinel screenshot here)*
+<p align="center">
+  <img width="967" height="155" alt="Q9" src="https://github.com/user-attachments/assets/54adca53-577f-412c-b2dc-3d1a91cf9c95" />
+</p>
 
 **Why This Matters:**  
 Identifying attacker-controlled infrastructure is critical for containment and attribution. The domain `sync.cloud-endpoint.net` was used consistently across multiple hosts to deliver tooling, confirming it as the attacker's primary staging server. This domain should be immediately blocked at the perimeter and submitted as an IOC for threat intelligence sharing.
@@ -306,7 +355,9 @@ EmberForgeX_CL
 ```
 
 **Evidence:**  
-*(Insert Sentinel screenshot here)*
+<p align="center">
+  <img width="548" height="204" alt="Q10" src="https://github.com/user-attachments/assets/35de7ef0-577f-4175-a081-4800a756cfa8" />
+</p>
 
 **Why This Matters:**  
 Loading a DLL via `rundll32.exe` is a classic Living Off The Land technique that abuses a legitimate Windows binary to execute malicious code. The D: drive path suggests the file arrived via removable media or a mounted drive. The `StartW` export is a common entry point used by malicious DLLs, and the `explorer.exe` parent confirms this was a user-initiated action — Lisa was likely socially engineered into opening the file.
@@ -339,7 +390,9 @@ EmberForgeX_CL
 ```
 
 **Evidence:**  
-*(Insert Sentinel screenshot here)*
+<p align="center">
+  <img width="560" height="172" alt="Q11" src="https://github.com/user-attachments/assets/9d90d49e-27bd-4de7-b108-629d947a9c2a" />
+</p>
 
 **Why This Matters:**  
 Delivering malware inside ISO or IMG files is a well established technique for bypassing Mark of the Web security warnings. When a user downloads and mounts a disk image, files inside it do not inherit the zone identifier that would trigger SmartScreen warnings. This suggests Lisa was likely sent a phishing email with an ISO attachment or download link, and was socially engineered into mounting and executing its contents.
@@ -372,7 +425,9 @@ EmberForgeX_CL
 ```
 
 **Evidence:**  
-*(Insert Sentinel screenshot here)*
+<p align="center">
+  <img width="951" height="64" alt="Q12" src="https://github.com/user-attachments/assets/fe2e2972-b6a8-44c8-a184-1fa7ae80630b" />
+</p>
 
 **Why This Matters:**  
 Identifying patient zero is critical for scoping the breach and understanding whether the attack was targeted or opportunistic. Lisa Martin's account was the entry point for the entire compromise, with the attacker subsequently pivoting from her workstation to the server and Domain Controller. The CISO's question about whether Lisa was specifically targeted can now be investigated further by examining the delivery mechanism and any prior reconnaissance activity.
@@ -405,7 +460,9 @@ EmberForgeX_CL
 ```
 
 **Evidence:**  
-*(Insert Sentinel screenshot here)*
+<p align="center">
+  <img width="570" height="202" alt="Q13" src="https://github.com/user-attachments/assets/ed784a3f-fd85-4daa-99b7-4f5efa5a0e88" />
+</p>
 
 **Why This Matters:**  
 The execution chain confirms this was a user-initiated action rather than an automated or remote execution. Lisa directly opened the malicious file through Windows Explorer, triggering `rundll32.exe` to load `review.dll`. This chain is consistent with a phishing or social engineering attack where the victim is manipulated into opening a malicious file delivered inside a mounted disk image.
@@ -439,7 +496,9 @@ EmberForgeX_CL
 ```
 
 **Evidence:**  
-*(Insert Sentinel screenshot here)*
+<p align="center">
+  <img width="981" height="190" alt="Q14" src="https://github.com/user-attachments/assets/3d4794c4-8d28-4f8a-98ba-4b9b33b6537c" />
+</p>
 
 **Why This Matters:**  
 The extraction step reveals the full delivery chain. The malicious DLL was packaged inside an archive named to appear legitimate, likely themed around an EmberForge review or project. Lisa extracted the archive to her Downloads folder using 7-Zip, then opened the contents which triggered `rundll32.exe` to load `review.dll`. This is consistent with a spear phishing attack using a weaponised archive delivered to a targeted employee.
@@ -473,7 +532,9 @@ EmberForgeX_CL
 ```
 
 **Evidence:**  
-*(Insert Sentinel screenshot here)*
+<p align="center">
+  <img width="753" height="131" alt="Q15" src="https://github.com/user-attachments/assets/328a387d-cf8f-41ad-9a00-2bbe0b521d6e" />
+</p>
 
 **Why This Matters:**  
 `C:\Users\Public` is a world-writable directory meaning any process regardless of privilege level can write files there. Dropping a payload named `update.exe` is a masquerading technique designed to blend in with legitimate software update processes. This binary became the attacker's persistent foothold on the workstation and the parent process for all subsequent tool deployment, lateral movement, and exfiltration activity across the entire environment.
@@ -506,7 +567,9 @@ EmberForgeX_CL
 ```
 
 **Evidence:**  
-*(Insert Sentinel screenshot here)*
+<p align="center">
+  <img width="809" height="204" alt="Q16" src="https://github.com/user-attachments/assets/970ccc14-da48-4b33-9a34-65b80e391681" />
+</p>
 
 **Why This Matters:**  
 The C2 domain `cdn.cloud-endpoint.net` shares the same base domain as the staging server `sync.cloud-endpoint.net` identified in Flag 9, confirming they are part of the same attacker-controlled infrastructure. The `cdn` subdomain is deliberately chosen to blend in with legitimate content delivery network traffic. The malware also queried the Domain Controller `EC2AMAZ-EEU3IA2` indicating early internal reconnaissance was occurring simultaneously with C2 beaconing.
@@ -541,7 +604,9 @@ EmberForgeX_CL
 ```
 
 **Evidence:**  
-*(Insert Sentinel screenshot here)*
+<p align="center">
+  <img width="678" height="144" alt="Q17" src="https://github.com/user-attachments/assets/34aaa12e-b010-453c-b4ac-061f4afdf644" />
+</p>
 
 **Why This Matters:**  
 The two resolved IPs belong to Cloudflare's infrastructure, indicating the attacker is hiding their true origin behind Cloudflare's reverse proxy. This is a common technique to obscure attacker infrastructure and make takedown requests more difficult. Both IPs should be blocked at the perimeter and the domain submitted as an IOC immediately.
@@ -575,7 +640,9 @@ EmberForgeX_CL
 ```
 
 **Evidence:**  
-*(Insert Sentinel screenshot here)*
+<p align="center">
+  <img width="792" height="134" alt="Q18" src="https://github.com/user-attachments/assets/06514043-1d9c-4291-8fc3-1719c3f67af9" />
+</p>
 
 **Why This Matters:**  
 Process injection via CreateRemoteThread allows the attacker to execute malicious code inside a legitimate Windows process, hiding it from casual inspection. Injecting into `spoolsv.exe` is particularly effective as it is a trusted system process that runs under SYSTEM privileges and maintains persistent network connections, providing both privilege escalation and a persistent C2 channel that blends in with normal system activity.
@@ -607,7 +674,9 @@ EmberForgeX_CL
 ```
 
 **Evidence:**  
-*(Insert Sentinel screenshot here)*
+<p align="center">
+  <img width="871" height="170" alt="Q19" src="https://github.com/user-attachments/assets/58e6f6d3-a7fb-4c6f-ac41-8406c298ba99" />
+</p>
 
 **Why This Matters:**  
 The fodhelper UAC bypass is a well documented technique that abuses the auto-elevation behaviour of `fodhelper.exe` to execute arbitrary code with high integrity without triggering a UAC prompt. By pointing the `ms-settings` shell command to `update.exe`, the attacker gained elevated privileges silently. This explains how the attacker was subsequently able to perform SYSTEM-level operations across the environment without the user being prompted to approve elevation.
@@ -640,7 +709,9 @@ EmberForgeX_CL
 ```
 
 **Evidence:**  
-*(Insert Sentinel screenshot here)*
+<p align="center">
+  <img width="856" height="170" alt="Q20" src="https://github.com/user-attachments/assets/d246a810-a905-4e6a-946f-13d04fbd3ca0" />
+</p>
 
 **Why This Matters:**  
 The `DelegateExecute` value is the key trigger for the fodhelper UAC bypass. When this value exists under `ms-settings\shell\open\command`, Windows redirects execution through the COM elevation mechanism, causing the associated command to run at high integrity without a UAC prompt. Its presence alongside a malicious payload path is a high-fidelity indicator of this specific bypass technique.
@@ -675,7 +746,9 @@ EmberForgeX_CL
 ```
 
 **Evidence:**  
-*(Insert Sentinel screenshot here)*
+<p align="center">
+  <img width="936" height="176" alt="Q21" src="https://github.com/user-attachments/assets/d6d9b538-0283-4465-8843-40c0d6febcd0" />
+</p>
 
 **Why This Matters:**  
 Injecting into `spoolsv.exe` running as `NT AUTHORITY\SYSTEM` gave the attacker the highest available privilege level on the workstation. This SYSTEM context was then used to perform all subsequent operations including lateral movement, tool deployment and credential access. The injection also provides stability as `spoolsv.exe` runs continuously as a Windows service, surviving user logoffs and persisting until the system is rebooted or the process is killed.
@@ -708,7 +781,9 @@ EmberForgeX_CL
 ```
 
 **Evidence:**  
-*(Insert Sentinel screenshot here)*
+<p align="center">
+  <img width="776" height="93" alt="Q22" src="https://github.com/user-attachments/assets/4ac164e3-c28b-4c65-9ae3-af75f00ba0bd" />
+</p>
 
 **Why This Matters:**  
 LSASS holds credentials for every currently logged-in user including plaintext passwords, NTLM hashes and Kerberos tickets. Dumping it to disk allows offline credential extraction using tools like Mimikatz. The use of direct syscalls to bypass API monitoring represents a sophisticated evasion technique that defeats many EDR solutions, making Sysmon file creation monitoring a critical detection control for this technique.
@@ -741,7 +816,9 @@ EmberForgeX_CL
 ```
 
 **Evidence:**  
-*(Insert Sentinel screenshot here)*
+<p align="center">
+  <img width="807" height="207" alt="Q23" src="https://github.com/user-attachments/assets/b8a4841b-b131-49de-832a-9e5bafc73f0d" />
+</p>
 
 **Why This Matters:**  
 Writing the dump file to `C:\Windows\System32` is a deliberate evasion technique designed to hide it among thousands of legitimate system files. Monitoring for dump file creation in system directories is a high-fidelity detection opportunity that should be implemented as an alert rule in any mature SOC environment.
@@ -774,7 +851,9 @@ EmberForgeX_CL
 ```
 
 **Evidence:**  
-*(Insert Sentinel screenshot here)*
+<p align="center">
+  <img width="992" height="59" alt="Q24" src="https://github.com/user-attachments/assets/8121a13a-6a32-485a-aa0b-664f3f8defde" />
+</p>
 
 **Why This Matters:**  
 `net user /domain` is one of the most commonly used domain enumeration commands, returning a full list of all domain user accounts. Executed within minutes of initial infection this confirms the attacker immediately began mapping the environment. Combined with subsequent enumeration commands this tells the CISO that the attacker had full visibility of the domain user base, meaning every account should be treated as potentially targeted.
@@ -807,7 +886,9 @@ EmberForgeX_CL
 ```
 
 **Evidence:**  
-*(Insert Sentinel screenshot here)*
+<p align="center">
+  <img width="992" height="170" alt="Q25" src="https://github.com/user-attachments/assets/67e41185-2007-4147-8e3c-1e1f480e0f43" />
+</p>
 
 **Why This Matters:**  
 Querying Domain Admins immediately after user enumeration confirms the attacker was specifically hunting for high value accounts to target. Knowing who the Domain Admins are allows the attacker to focus credential theft and lateral movement efforts on the accounts that would give them full control of the domain. This 12 second gap between commands suggests automated or scripted reconnaissance rather than manual execution.
@@ -840,7 +921,9 @@ EmberForgeX_CL
 ```
 
 **Evidence:**  
-*(Insert Sentinel screenshot here)*
+<p align="center">
+  <img width="974" height="164" alt="Q26" src="https://github.com/user-attachments/assets/49b1cb97-7001-41d2-9c8b-8b19217538e0" />
+</p>
 
 **Why This Matters:**  
 `nltest /dclist` is a standard command for enumerating Domain Controllers in a domain. Knowing the location of the Domain Controllers is a critical step before lateral movement, as they are the primary targets for credential theft and domain compromise. This command completed a rapid automated reconnaissance sequence — users, Domain Admins, Domain Controllers — all within 35 seconds of each other, confirming scripted post-exploitation behaviour consistent with a mature threat actor.
@@ -873,7 +956,9 @@ EmberForgeX_CL
 ```
 
 **Evidence:**  
-*(Insert Sentinel screenshot here)*
+<p align="center">
+  <img width="972" height="173" alt="Q27" src="https://github.com/user-attachments/assets/2d1d207e-c2ff-4789-869e-4a697c61d9bd" />
+</p>
 
 **Why This Matters:**  
 Creating a fully open network share from the compromised workstation allowed the attacker to distribute tools to other hosts without needing to download them from external infrastructure again. The `/grant:everyone,full` permission means any authenticated user on the network could access the share. This is a classic lateral movement staging technique that also serves as a persistence mechanism for tool redeployment if any tools are removed from other hosts.
@@ -906,7 +991,9 @@ EmberForgeX_CL
 ```
 
 **Evidence:**  
-*(Insert Sentinel screenshot here)*
+<p align="center">
+  <img width="955" height="168" alt="Q28" src="https://github.com/user-attachments/assets/e3a62742-4a7f-46aa-b0b3-42d1628fa715" />
+</p>
 
 **Why This Matters:**  
 Opening inbound TCP port 445 allows SMB connections to the workstation from other hosts on the network. This was a prerequisite for the PsExec-style lateral movement seen later in the investigation, where the attacker used SMB to push commands and tools to other hosts. The rule was created by the injected `spoolsv.exe` process under `NT AUTHORITY\SYSTEM`, confirming the attacker had full system-level control of the workstation at this point.
@@ -939,7 +1026,9 @@ EmberForgeX_CL
 ```
 
 **Evidence:**  
-*(Insert Sentinel screenshot here)*
+<p align="center">
+  <img width="1176" height="282" alt="Q29" src="https://github.com/user-attachments/assets/82982840-5a4d-4023-8c97-ba136c440489" />
+</p>
 
 **Why This Matters:**  
 All post-escalation attacker activity on the workstation was executed through the injected `spoolsv.exe` process, confirming it as the stable SYSTEM-level foothold. This process chain is a critical pivot point in the investigation — any command with `spoolsv.exe` as a parent after the injection at `21:56:44` should be treated as attacker activity. This pattern provides a high-fidelity detection opportunity for hunting similar compromises across the environment.
@@ -972,7 +1061,9 @@ EmberForgeX_CL
 ```
 
 **Evidence:**  
-*(Insert Sentinel screenshot here)*
+<p align="center">
+  <img width="1009" height="169" alt="Q30" src="https://github.com/user-attachments/assets/bbb91e43-beb5-43b2-a251-812178e08892" />
+</p>
 
 **Why This Matters:**  
 Using Windows admin shares (C$) for lateral movement is a well established technique that abuses legitimate Windows file sharing functionality. The admin share `C$` is only accessible to administrators, confirming the attacker had domain admin level credentials at this point — likely obtained from the LSASS dump in Flag 22. This technique leaves minimal network signatures as it uses standard SMB traffic on port 445.
@@ -1005,7 +1096,9 @@ EmberForgeX_CL
 ```
 
 **Evidence:**  
-*(Insert Sentinel screenshot here)*
+<p align="center">
+  <img width="979" height="167" alt="Q31" src="https://github.com/user-attachments/assets/64997979-5fb2-4e5b-b43f-b76cd488fff4" />
+</p>
 
 **Why This Matters:**  
 `certutil.exe` is a legitimate Windows binary used for certificate management that can also download files from URLs, making it a commonly abused Living Off The Land binary. Its use bypasses application whitelisting controls that block unknown executables since it is a trusted signed Microsoft binary. The non-standard port 8080 on the staging server helps avoid detection by security tools that only monitor standard HTTP port 80 traffic.
@@ -1036,7 +1129,9 @@ EmberForgeX_CL
 ```
 
 **Evidence:**  
-*(Insert Sentinel screenshot here)*
+<p align="center">
+  <img width="1132" height="175" alt="Q32" src="https://github.com/user-attachments/assets/c9ae0728-3ec2-49b8-b0c9-e2f7b3e4cb7d" />
+</p>
 
 **Why This Matters:**  
 PsExec-style lateral movement creates temporary Windows services with random names to execute commands on remote systems. The random 8-character service name is a telltale indicator of this technique — legitimate services never have randomly generated names. The pattern of writing commands to temporary batch files and deleting them afterwards is a deliberate anti-forensics measure. EventCode 7045 monitoring is a critical detection control for this lateral movement technique.
@@ -1068,7 +1163,9 @@ EmberForgeX_CL
 ```
 
 **Evidence:**  
-*(Insert Sentinel screenshot here)*
+<p align="center">
+  <img width="1402" height="178" alt="Q33" src="https://github.com/user-attachments/assets/42f746fe-3123-4928-9070-5c29bc6c6ec0" />
+</p>
 
 **Why This Matters:**  
 The `cd` command is consistently the first command executed on newly compromised hosts via PsExec-style remote execution. It serves as a simple connectivity and execution confirmation test before the attacker proceeds with further activity. This predictable pattern is a useful detection opportunity — a `cd` command executed via a randomly named temporary service is a near-certain indicator of PsExec-style lateral movement.
@@ -1099,10 +1196,357 @@ EmberForgeX_CL
 ```
 
 **Evidence:**  
-*(Insert Sentinel screenshot here)*
+<p align="center">
+  <img width="1419" height="265" alt="Q34" src="https://github.com/user-attachments/assets/bff3bd3d-4954-4a83-8c62-d5180ea113e2" />
+</p>
 
 **Why This Matters:**  
 Repeated NTLM authentication failures from an internal host are a strong indicator of lateral movement attempts using pass-the-hash or credential spraying techniques. The failures suggest the NTLM hash obtained from the LSASS dump was not working reliably, forcing the attacker to pivot to PsExec-style service execution instead. This pattern of failed authentication followed by successful alternative execution is a common attacker behaviour worth alerting on.
 
 ---
 
+### Flag 35: DC Arrival and Credential Extraction – Domain Controller Compromise
+
+**Objective:**  
+Identify the first command executed on the Domain Controller and the tool used to extract the Active Directory database.
+
+**Flag Value:**  
+`vssadmin list shadows > vssadmin.exe`
+
+**What to Hunt:**  
+Search EventCode 7045 service creation events on the Domain Controller, parsing the ImagePath field to extract the actual commands hidden inside the PsExec-style command wrapper.
+
+**Detection Strategy:**  
+I searched EventCode 7045 events on the Domain Controller `EC2AMAZ-EEU3IA2`. The same PsExec-style remote execution pattern used on the server was applied to the DC. The first command `vssadmin list shadows` enumerated existing shadow copies, followed immediately by `vssadmin.exe` being used to create a shadow copy and extract `ntds.dit`.
+
+**KQL Query:**  
+```kql
+EmberForgeX_CL
+| where TimeGenerated between (datetime(2026-01-01) .. now())
+| where EventCode_s == "1"
+| where Computer contains "EEU3IA2"
+| where CommandLine_s has_any ("vssadmin", "ntds", "shadow", "copy")
+| project UtcTime_s, Computer, Image_s, CommandLine_s, ParentImage_s
+| sort by UtcTime_s asc
+```
+
+**Evidence:**  
+<p align="center">
+  <img width="978" height="171" alt="Q35" src="https://github.com/user-attachments/assets/de269175-4143-4010-b5ea-7bbe3c0f58bc" />
+</p>
+
+**Why This Matters:**  
+Reaching the Domain Controller and extracting `ntds.dit` represents a full domain compromise. Every account credential in the domain is now in the attacker's hands. This is the worst case scenario for any organisation — complete domain level access means every system, every user, and every service account must be treated as compromised until credentials are reset across the entire environment.
+
+---
+
+### Flag 36: Backdoor Account – Persistence via Fake Service Account
+
+**Objective:**  
+Identify the backdoor account created by the attacker on the Domain Controller designed to blend in with legitimate service accounts.
+
+**Flag Value:**  
+`svc_backup`
+
+**What to Hunt:**  
+Search EventCode 4720 account creation events on the Domain Controller for newly created accounts, particularly those named to resemble legitimate service accounts.
+
+**Detection Strategy:**  
+I searched EventCode 4720 account creation events on the Domain Controller `EC2AMAZ-EEU3IA2`. The account `svc_backup` was created under `NT AUTHORITY\SYSTEM` context, designed to blend in with legitimate service accounts by using the `svc_` naming convention commonly used for service accounts in enterprise environments.
+
+**KQL Query:**  
+```kql
+EmberForgeX_CL
+| where TimeGenerated between (datetime(2026-01-01) .. now())
+| where EventCode_s == "4720"
+| parse Raw_s with * "TargetUserName'>" Username "<" *
+| parse Raw_s with * "SubjectUserName'>" CreatedBy "<" *
+| parse Raw_s with * "TargetDomainName'>" Domain "<" *
+| project UtcTime_s, Computer, Username, Domain, CreatedBy
+| sort by UtcTime_s asc
+```
+
+**Evidence:**  
+<p align="center">
+  <img width="805" height="151" alt="Q36" src="https://github.com/user-attachments/assets/75625b60-681e-439d-be8f-472b35ac1dbc" />
+</p>
+
+**Why This Matters:**  
+Creating a backdoor account named `svc_backup` is a deliberate masquerading technique. The `svc_` prefix mimics legitimate Windows service accounts, making it easy to overlook during manual review. This account provides the attacker with persistent domain access even if all other footholds are removed. Every new account creation on a Domain Controller should be treated as suspicious unless verified through a formal change management process.
+
+---
+
+### Flag 37: Backdoor Credentials – Plaintext Password Exposure
+
+**Objective:**  
+Identify the plaintext password used to create the backdoor account, exposed in the command line arguments.
+
+**Flag Value:**  
+`P@ssw0rd123!`
+
+**What to Hunt:**  
+Search process creation events on the Domain Controller for net user commands referencing the backdoor account identified in Flag 36.
+
+**Detection Strategy:**  
+I searched process creation events on the Domain Controller for commands referencing `svc_backup`. At `23:38:11`, the account was created with the password `P@ssw0rd123!` passed directly as a command line argument. Immediately after at `23:39:37`, the account was added to Domain Admins — giving the attacker persistent domain admin level access.
+
+**KQL Query:**  
+```kql
+EmberForgeX_CL
+| where TimeGenerated between (datetime(2026-01-01) .. now())
+| where EventCode_s == "1"
+| where Computer contains "EEU3IA2"
+| where CommandLine_s contains "svc_backup"
+| project UtcTime_s, Computer, CommandLine_s
+| sort by UtcTime_s asc
+```
+
+**Evidence:**  
+<p align="center">
+  <img width="1179" height="271" alt="Q37" src="https://github.com/user-attachments/assets/bb7d6810-96f6-426d-9ef7-f37243a77039" />
+</p>
+
+**Why This Matters:**  
+Passing passwords as command line arguments is a severe OPSEC failure — Sysmon EventCode 1 captures full command lines in plaintext, permanently logging the credential. The immediate addition of `svc_backup` to Domain Admins confirms the attacker's intent to maintain persistent privileged access to the domain. This account combined with the previously extracted `ntds.dit` gives the attacker multiple redundant paths back into the environment.
+
+---
+
+### Flag 38: Privilege Assignment – Domain Admin Group Addition
+
+**Objective:**  
+Identify the privileged group the attacker added the backdoor account to in order to gain elevated domain privileges.
+
+**Flag Value:**  
+`Domain Admins`
+
+**What to Hunt:**  
+Search process creation events on the Domain Controller for group membership commands referencing the backdoor account identified in Flag 36.
+
+**Detection Strategy:**  
+I examined the commands following the account creation at `23:38:11`. Just 86 seconds later at `23:39:37`, the attacker added `svc_backup` to the `Domain Admins` group using `net group "Domain Admins" svc_backup /add /domain`, granting the backdoor account the highest level of privilege in the domain.
+
+**KQL Query:**  
+```kql
+EmberForgeX_CL
+| where TimeGenerated between (datetime(2026-01-01) .. now())
+| where EventCode_s == "1"
+| where Computer contains "EEU3IA2"
+| where CommandLine_s contains "svc_backup"
+| project UtcTime_s, Computer, CommandLine_s
+| sort by UtcTime_s asc
+```
+
+**Evidence:**  
+<p align="center">
+  <img width="1177" height="261" alt="Q38" src="https://github.com/user-attachments/assets/67d0d3fa-2336-4534-8a17-8ee17cf944cc" />
+</p>
+
+**Why This Matters:**  
+Adding `svc_backup` to Domain Admins gives the attacker a persistent domain admin account that survives even if all other footholds are removed. Combined with the `ntds.dit` extraction, the exposed password in command line logs, and the deceptive service account naming convention, this represents a comprehensive persistence strategy. Any new Domain Admin account additions should trigger an immediate alert and investigation.
+
+---
+
+### Flag 39: Exposed Credential – Network Drive Mapping Password
+
+**Objective:**  
+Identify the plaintext password exposed in the network drive mapping command used by the attacker on the Domain Controller.
+
+**Flag Value:**  
+`EmberForge2024!`
+
+**What to Hunt:**  
+Search process creation events on the Domain Controller for net use commands containing authentication credentials passed as plaintext arguments.
+
+**Detection Strategy:**  
+I searched process creation events on the Domain Controller for network drive mapping commands. At `23:45:25`, the attacker mapped drive Z: to `\\10.1.173.145\tools` — the workstation's tool share identified in Flag 27 — using the domain Administrator account with the password `EmberForge2024!` passed in plaintext. The drive was deleted at `23:49:31` after tools were retrieved.
+
+**KQL Query:**  
+```kql
+EmberForgeX_CL
+| where TimeGenerated between (datetime(2026-01-01) .. now())
+| where EventCode_s == "1"
+| where Computer contains "EEU3IA2"
+| where CommandLine_s has_any ("net use", "Map")
+| project UtcTime_s, Computer, CommandLine_s
+| sort by UtcTime_s asc
+```
+
+**Evidence:**  
+<p align="center">
+  <img width="1303" height="146" alt="Q39" src="https://github.com/user-attachments/assets/1c2e337d-6e43-4244-9244-190a899b44d7" />
+</p>
+
+**Why This Matters:**  
+The domain Administrator password being passed in plaintext confirms the attacker successfully cracked or decrypted credentials from the `ntds.dit` dump. This means the highest privileged account in the domain is fully compromised. The connection back to `10.1.173.145` — the workstation — confirms lateral movement was bidirectional between the workstation and Domain Controller.
+
+---
+
+### Flag 40: Scheduled Task – Persistence via Fake Windows Update Task
+
+**Objective:**  
+Identify the scheduled task created by the attacker to ensure their payload survives reboots.
+
+**Flag Value:**  
+`WindowsUpdate`
+
+**What to Hunt:**  
+Search process creation events across all hosts for scheduled task creation commands, particularly those referencing the attacker's primary payload and using names designed to look legitimate.
+
+**Detection Strategy:**  
+I searched process creation events for schtasks commands across all hosts. The task `WindowsUpdate` was created multiple times on both the workstation and Domain Controller, configured to run `C:\Users\Public\update.exe` as SYSTEM on startup. The name `WindowsUpdate` was deliberately chosen to blend in with legitimate Windows update tasks.
+
+**KQL Query:**  
+```kql
+EmberForgeX_CL
+| where TimeGenerated between (datetime(2026-01-01) .. now())
+| where EventCode_s == "1"
+| where CommandLine_s has_any ("schtasks", "Register-ScheduledTask")
+| project UtcTime_s, Computer, User_s, CommandLine_s
+| sort by UtcTime_s asc
+```
+
+**Evidence:**  
+<p align="center">
+  <img width="1256" height="160" alt="Q40" src="https://github.com/user-attachments/assets/e3f20b6e-5b22-4347-92db-e03e07980b0e" />
+</p>
+
+**Why This Matters:**  
+The `WindowsUpdate` scheduled task ensures `update.exe` runs as SYSTEM on every reboot, providing persistent access that survives password resets. To answer the CISO's question — rebuilding machines and resetting passwords alone is not sufficient. The scheduled task, backdoor account `svc_backup`, AnyDesk installation, and extracted `ntds.dit` represent multiple redundant persistence mechanisms that must all be addressed before the environment can be considered clean.
+
+---
+
+### Flag 41: Remote Access Tool – Silent AnyDesk Installation
+
+**Objective:**  
+Identify the legitimate remote management application installed by the attacker for persistent unattended access.
+
+**Flag Value:**  
+`AnyDesk`
+
+**What to Hunt:**  
+Search process creation events across all hosts for silent installation commands of remote access tools, particularly those installed from world-writable directories.
+
+**Detection Strategy:**  
+I searched process creation events across all hosts for remote access tool installation commands. AnyDesk was downloaded from the attacker's staging server, silently installed on multiple hosts using `--install` and `--silent` flags, and configured with a custom unattended access password hash to allow the attacker to connect without user interaction.
+
+**KQL Query:**  
+```kql
+EmberForgeX_CL
+| where TimeGenerated between (datetime(2026-01-01) .. now())
+| where EventCode_s == "1"
+| where CommandLine_s contains "AnyDesk"
+| project UtcTime_s, Computer, User_s, CommandLine_s, ParentImage_s
+| sort by UtcTime_s asc
+```
+
+**Evidence:**  
+<p align="center">
+  <img width="1259" height="285" alt="Q41" src="https://github.com/user-attachments/assets/437dc540-a7ce-4a61-919a-3a5bbac86724" />
+</p>
+
+**Why This Matters:**  
+AnyDesk is a legitimate remote desktop tool that blends in with normal business software, making it difficult to detect without process-level telemetry. The attacker configured it with a custom password hash for unattended access, meaning they could connect to any compromised host at any time without requiring user interaction or credentials. This represents a persistent remote access channel that operates independently of all other footholds and would survive password resets and scheduled task removal.
+
+---
+
+### Flag 42: Remote Access Configuration – AnyDesk Config File Path
+
+**Objective:**  
+Identify the full path of the remote access tool's configuration file that the attacker read and modified.
+
+**Flag Value:**  
+`C:\ProgramData\AnyDesk\system.conf`
+
+**What to Hunt:**  
+Search process creation events for commands reading or writing to the AnyDesk configuration file across all compromised hosts.
+
+**Detection Strategy:**  
+I searched process creation events for commands referencing the AnyDesk configuration file. The attacker read `system.conf` using a `type` command and then modified it by appending an unattended access password hash, enabling passwordless remote access. This activity was observed on both the workstation and server.
+
+**KQL Query:**  
+```kql
+EmberForgeX_CL
+| where TimeGenerated between (datetime(2026-01-01) .. now())
+| where EventCode_s == "1"
+| where CommandLine_s contains "system.conf"
+| project UtcTime_s, Computer, User_s, CommandLine_s
+| sort by UtcTime_s asc
+```
+
+**Evidence:**  
+<p align="center">
+  <img width="1191" height="271" alt="Q42" src="https://github.com/user-attachments/assets/6b8eae69-0bbd-4fd7-a754-1c770d943685" />
+</p>
+
+**Why This Matters:**  
+Modifying `system.conf` to include a custom unattended access password hash allows the attacker to connect to compromised hosts via AnyDesk without any user interaction or visible prompt. This configuration change persists across reboots and survives credential resets, representing a stealthy persistent remote access channel.
+
+---
+
+### Flag 43: Anti-Forensics Tool – Event Log Clearing
+
+**Objective:**  
+Identify the built-in Windows utility used by the attacker to clear event logs on the Domain Controller.
+
+**Flag Value:**  
+`wevtutil`
+
+**What to Hunt:**  
+Search process creation events on the Domain Controller for event log clearing commands using built-in Windows utilities.
+
+**Detection Strategy:**  
+I searched process creation events on the Domain Controller for log clearing commands. At `23:50:49`, the attacker used `wevtutil cl Security` to clear the Security event log, followed by `wevtutil cl System` at `23:51:06` to clear the System event log. Both commands were executed multiple times, confirming a deliberate attempt to destroy forensic evidence.
+
+**KQL Query:**  
+```kql
+EmberForgeX_CL
+| where TimeGenerated between (datetime(2026-01-01) .. now())
+| where EventCode_s == "1"
+| where Computer contains "EEU3IA2"
+| where CommandLine_s has_any ("wevtutil", "Clear-EventLog", "eventlog")
+| project UtcTime_s, Computer, User_s, CommandLine_s
+| sort by UtcTime_s asc
+```
+
+**Evidence:**  
+<p align="center">
+  <img width="1211" height="209" alt="Q43" src="https://github.com/user-attachments/assets/f3488a77-3684-4ccc-8004-7fe70d5bbdb2" />
+</p>
+
+**Why This Matters:**  
+`wevtutil` is a built-in Windows command line utility for managing event logs. Using it to clear Security and System logs destroys evidence of logon events, service installations, and other attacker activity. However because Sysmon logs are stored separately and were forwarded to Sentinel before deletion, the clearing activity itself was captured — answering the CISO's question that yes, the attacker attempted to cover their tracks, but the Sysmon telemetry pipeline preserved the evidence.
+
+---
+
+### Flag 44: Cleared Logs – Event Log Targets
+
+**Objective:**  
+Identify the two event logs cleared by the attacker on the Domain Controller.
+
+**Flag Value:**  
+`Security, System`
+
+**What to Hunt:**  
+Examine the wevtutil commands identified in Flag 43 to determine which specific event logs were targeted for clearing.
+
+**Detection Strategy:**  
+I examined the wevtutil commands on the Domain Controller from Flag 43. Two logs were specifically targeted — the Security log containing authentication, account management and privilege use events, and the System log containing service installation and system activity events. Both were cleared multiple times confirming deliberate anti-forensics activity.
+
+**KQL Query:**  
+```kql
+EmberForgeX_CL
+| where TimeGenerated between (datetime(2026-01-01) .. now())
+| where EventCode_s == "1"
+| where Computer contains "EEU3IA2"
+| where CommandLine_s contains "wevtutil"
+| project UtcTime_s, Computer, User_s, CommandLine_s
+| sort by UtcTime_s asc
+```
+
+**Evidence:**  
+<p align="center">
+  <img width="1235" height="227" alt="Q44" src="https://github.com/user-attachments/assets/ea52f7c3-a14d-4bf7-aa81-8c769c53cb16" />
+</p>
+
+**Why This Matters:**  
+The Security log was targeted to destroy evidence of logon events, account creation, privilege escalation and group membership changes. The System log was targeted to destroy evidence of service installations used during lateral movement. Clearing both logs represents a systematic attempt to remove the most forensically valuable Windows event sources. The fact that Sysmon telemetry was forwarded to Sentinel before deletion preserved the evidence and allowed this investigation to proceed.

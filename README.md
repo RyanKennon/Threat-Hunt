@@ -2,9 +2,9 @@
 
 ## Table of Contents
 
-[Platforms and Tools](#platforms-and-tools)
-[Scenario](
-[Starting Point](
+[Platforms and Tools](#platforms-and-tools)  
+[Scenario](#scenario)  
+[Starting Point](#starting-point)  
 - [Flag 1: Target Directory – Source of Stolen Data](
 - [Flag 2: Exfil Destination – Cloud Storage Provider](
 - [Flag 3: Attacker Attribution – Authentication Email](

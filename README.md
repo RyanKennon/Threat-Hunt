@@ -2,8 +2,7 @@
 
 ## Table of Contents
 
-[Table of Contents](#platforms-and-tools)
-[Platforms and Tools](
+[Platforms and Tools](#platforms-and-tools)
 [Scenario](
 [Starting Point](
 - [Flag 1: Target Directory – Source of Stolen Data](

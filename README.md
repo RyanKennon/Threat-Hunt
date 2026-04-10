@@ -1,6 +1,86 @@
 # Threat-Hunt
 
-### Flag 0: Environment Access – Custom Log Table
+## Table of Contents
+
+[Table of Contents](#platforms-and-tools)
+[Platforms and Tools](
+[Scenario](
+[Starting Point](
+- [Flag 1: Target Directory – Source of Stolen Data](
+- [Flag 2: Exfil Destination – Cloud Storage Provider](
+- [Flag 3: Attacker Attribution – Authentication Email](
+- [Flag 4: Domain Compromise Evidence – Credential Database Access](
+- [Flag 5: Exfiltration Tool – Cloud Sync Abuse](
+- [Flag 6: Exfiltration Destination IP – Network Correlation](
+- [Flag 7: Attacker Credential Exposure – Plaintext Password](
+- [Flag 8: Archive Method – Living Off The Land Compression](
+- [Flag 9: Staging Server – Attacker Infrastructure](
+- [Flag 10: Malicious File – Initial Execution](
+- [Flag 11: Delivery Vector – Mounted Disk Image](
+- [Flag 12: Compromised User – Patient Zero](
+- [Flag 13: Execution Chain – Process Lineage](
+- [Flag 14: Delivery Unpacking – Archive Extraction](
+- [Flag 15: Dropped Payload – Primary Attack Tool](
+- [Flag 16: C2 Domain – Command and Control Infrastructure](
+- [Flag 17: Primary C2 IP – Resolved Address](
+- [Flag 18: Injection Chain – Process Injection for Defense Evasion](
+- [Flag 19: UAC Bypass Binary – Auto-Elevation Abuse](
+- [Flag 20: Registry Bypass Enabler – DelegateExecute Value](
+- [Flag 21: Stable Injection Chain – Elevated Process Injection](
+- [Flag 22: Credential Dumping Process – LSASS Memory Dump](
+- [Flag 23: Dump Location – LSASS Dump File Path](
+- [Flag 24: User Enumeration – Domain Account Discovery](
+- [Flag 25: Privilege Enumeration – Domain Admin Group Discovery](
+- [Flag 26: Infrastructure Mapping – Domain Controller Discovery](
+- [Flag 27: Tool Staging Share – Network Share Creation](
+- [Flag 28: Firewall Manipulation – Inbound SMB Rule](
+- [Flag 29: Post-Escalation Parent – Injected System Process](
+- [Flag 30: Beacon Distribution – Tool Transfer via Admin Share](
+- [Flag 31: LOLBin Tool Staging – Certutil Download Cradle](
+- [Flag 32: Remote Execution Evidence – Temporary Service Creation](
+- [Flag 33: First Command on Server – Initial Beacon Check](
+- [Flag 34: Failed Lateral Movement – NTLM Authentication Failures](
+- [Flag 35: DC Arrival and Credential Extraction – Domain Controller Compromise](
+- [Flag 36: Backdoor Account – Persistence via Fake Service Account](
+- [Flag 37: Backdoor Credentials – Plaintext Password Exposure](
+- [Flag 38: Privilege Assignment – Domain Admin Group Addition](
+- [Flag 39: Exposed Credential – Network Drive Mapping Password](
+- [Flag 40: Scheduled Task – Persistence via Fake Windows Update Task](
+- [Flag 41: Remote Access Tool – Silent AnyDesk Installation](
+- [Flag 42: Remote Access Configuration – AnyDesk Config File Path](
+- [Flag 43: Anti-Forensics Tool – Event Log Clearing](
+- [Flag 44: Cleared Logs – Event Log Targets](
+[Logical Flow & Analyst Reasoning](
+[MITRE ATT&CK Mapping](
+[Key Findings](
+[Recommendations for Remediation](
+
+
+---
+
+## Platforms and Tools
+
+**Analysis Environment:**
+
+- Microsoft Sentinel (Log Analytics Workspace — law-cyber-range)
+- Kusto Query Language (KQL)
+
+**Log Sources Analysed:**
+
+- Sysmon Operational logs
+- Windows Security Event logs
+- Custom log table — EmberForgeX_CL
+
+
+## Scenario
+
+"We have a breach. EmberForge Studios, our game development subsidiary, has been compromised. Unreleased source code is on the dark web. Lead Artist Lisa Martin reported her workstation behaving strangely after opening _____ from her desktop."
+
+"I have a board meeting in 4 hours. Before I care about how they got in, I need to know what they took and where it went. Legal needs the scope for breach notification. The _____ team has already been notified. Get in the logs. Now."
+
+---
+
+### Starting Point
 
 **Objective:**  
 Confirm access to the investigation environment by identifying the custom log table containing all Sysmon and Windows Security telemetry for the EmberForge investigation.
@@ -619,7 +699,7 @@ The two resolved IPs belong to Cloudflare's infrastructure, indicating the attac
 Identify the process injection chain used by the attacker to hide malicious activity inside a legitimate Windows process.
 
 **Flag Value:**  
-`update.exe > spoolsv.exe`
+`rundll32.exe > notepad.exe`
 
 **What to Hunt:**  
 Search for CreateRemoteThread events (EventCode 8) on the workstation to identify processes injecting code into other processes.
@@ -641,7 +721,7 @@ EmberForgeX_CL
 
 **Evidence:**  
 <p align="center">
-  <img width="792" height="134" alt="Q18" src="https://github.com/user-attachments/assets/06514043-1d9c-4291-8fc3-1719c3f67af9" />
+  <img width="855" height="232" alt="Q18 corrected" src="https://github.com/user-attachments/assets/448a179f-3fd9-4efa-976b-dfbc3195c954" />
 </p>
 
 **Why This Matters:**  
@@ -936,7 +1016,7 @@ EmberForgeX_CL
 Identify the command used by the attacker to create a network share on the workstation for use as a tool distribution point before lateral movement.
 
 **Flag Value:**  
-`net share tools=C:\Users\Public /grant:everyone,full`
+`cmd.exe /c "net share tools=C:\Users\Public /grant:everyone,full"`
 
 **What to Hunt:**  
 Search for network share creation commands on the workstation, particularly those granting full access to everyone and sharing world-writable directories.
@@ -950,14 +1030,14 @@ EmberForgeX_CL
 | where todatetime(UtcTime_s) between (datetime(2026-01-30 21:00) .. datetime(2026-01-31 00:00))
 | where EventCode_s == "1"
 | where Computer contains "B9GHHO6"
-| where CommandLine_s has_any ("net share", "New-SmbShare")
+| where CommandLine_s contains "net share"
 | project UtcTime_s, Computer, User_s, CommandLine_s, ParentImage_s
 | sort by UtcTime_s asc
 ```
 
 **Evidence:**  
 <p align="center">
-  <img width="972" height="173" alt="Q27" src="https://github.com/user-attachments/assets/2d1d207e-c2ff-4789-869e-4a697c61d9bd" />
+  <img width="1017" height="200" alt="Q27 corrected" src="https://github.com/user-attachments/assets/efa55cd9-e4fc-4f09-bcbe-b813431afb7d" />
 </p>
 
 **Why This Matters:**  
@@ -1148,7 +1228,7 @@ PsExec-style lateral movement creates temporary Windows services with random nam
 Identify the very first command executed by the attacker on the server after remote execution was established.
 
 **Flag Value:**  
-`cd`
+`whoami`
 
 **What to Hunt:**  
 Examine the earliest temporary service creation event on the server and extract the command embedded in the ImagePath field.
@@ -1167,12 +1247,11 @@ EmberForgeX_CL
 | where ServiceName != "AnyDesk Service"
 | project UtcTime_s, Computer, ServiceName, FirstCommand
 | sort by UtcTime_s asc
-| take 1
 ```
 
 **Evidence:**  
 <p align="center">
-  <img width="598" height="161" alt="Q33 redo" src="https://github.com/user-attachments/assets/29999a0d-7889-4cf4-b5ad-0eae140adb20" />
+  <img width="560" height="117" alt="Q33 corrected" src="https://github.com/user-attachments/assets/8b0ad71c-ef4b-49d9-ab93-925a7e574230" />
 </p>
 
 **Why This Matters:**  
@@ -1222,7 +1301,7 @@ Repeated NTLM authentication failures from an internal host are a strong indicat
 Identify the first command executed on the Domain Controller and the tool used to extract the Active Directory database.
 
 **Flag Value:**  
-`vssadmin list shadows > vssadmin.exe`
+`whoami > vssadmin.exe`
 
 **What to Hunt:**  
 Search EventCode 7045 service creation events on the Domain Controller, parsing the ImagePath field to extract the actual commands hidden inside the PsExec-style command wrapper.
@@ -1243,7 +1322,7 @@ EmberForgeX_CL
 
 **Evidence:**  
 <p align="center">
-  <img width="978" height="171" alt="Q35" src="https://github.com/user-attachments/assets/de269175-4143-4010-b5ea-7bbe3c0f58bc" />
+  <img width="850" height="336" alt="Untitled Diagram-Page-3 drawio" src="https://github.com/user-attachments/assets/076d320c-57d8-4e87-a901-158252f73284" />
 </p>
 
 **Why This Matters:**  
@@ -1561,3 +1640,405 @@ EmberForgeX_CL
 
 **Why This Matters:**  
 The Security log was targeted to destroy evidence of logon events, account creation, privilege escalation and group membership changes. The System log was targeted to destroy evidence of service installations used during lateral movement. Clearing both logs represents a systematic attempt to remove the most forensically valuable Windows event sources. The fact that Sysmon telemetry was forwarded to Sentinel before deletion preserved the evidence and allowed this investigation to proceed.
+
+---
+
+## Logical Flow & Analyst Reasoning
+
+**Flag 0 — Environment Access:**  
+Confirmed access to the `EmberForgeX_CL` custom log table in the 
+`law-cyber-range` Sentinel workspace, establishing the starting point 
+for the investigation.
+
+**Flag 1 — Target Directory:**  
+Hunting compression commands surfaced a PowerShell `Compress-Archive` 
+command targeting `C:\GameDev`, revealing the stolen data source 
+immediately.
+
+**Flag 2 — Exfil Destination:**  
+The `mega:exfil` argument in the rclone command confirmed MEGA cloud 
+storage as the destination for the stolen data.
+
+**Flag 3 — Attacker Attribution:**  
+The attacker passed MEGA credentials directly in the command line, 
+exposing the email address `jwilson.vhr@proton.me` as a direct 
+attribution lead.
+
+**Flag 4 — Domain Compromise Evidence:**  
+Volume shadow copy commands on the Domain Controller confirmed the 
+attacker extracted `ntds.dit`, representing a full domain credential 
+compromise.
+
+**Flag 5 — Exfil Tool:**  
+`rclone.exe` was identified as the exfiltration tool, executed multiple 
+times from `C:\Users\Public` under `NT AUTHORITY\SYSTEM` with 
+`update.exe` as the parent process.
+
+**Flag 6 — Exfil Destination IP:**  
+Correlating rclone network connections confirmed `66.203.125.15` as the 
+MEGA API endpoint that received the stolen data over port 443.
+
+**Flag 7 — Attacker Credential Exposure:**  
+Comparing all rclone executions revealed one instance where the password 
+`Summer2024!` was passed directly as a command line argument — a 
+significant OPSEC failure captured permanently in Sysmon logs.
+
+**Flag 8 — Archive Method:**  
+The built-in PowerShell `Compress-Archive` cmdlet was used to package 
+the stolen data, a Living Off The Land technique that avoids detection 
+based on known malicious binaries.
+
+**Flag 9 — Staging Server:**  
+Multiple download commands across all three hosts referenced the same 
+external domain `sync.cloud-endpoint.net`, confirming it as the 
+attacker's primary tool distribution infrastructure.
+
+**Flag 10 — Malicious File:**  
+Tracing the earliest malicious process on the workstation revealed 
+`rundll32.exe` loading `review.dll` from a D: drive with `explorer.exe` 
+as the parent, confirming user-initiated execution.
+
+**Flag 11 — Delivery Vector:**  
+The D: drive path of the malicious DLL indicated delivery via a mounted 
+disk image such as an ISO, a technique that bypasses Windows Mark of the 
+Web protections.
+
+**Flag 12 — Compromised User:**  
+The User field of the malicious execution event confirmed `lmartin` as 
+patient zero — the entry point for the entire compromise.
+
+**Flag 13 — Execution Chain:**  
+The full process lineage of `explorer.exe > rundll32.exe > review.dll` 
+confirmed Lisa directly opened the malicious file through Windows 
+Explorer.
+
+**Flag 14 — Delivery Unpacking:**  
+A 7-Zip extraction event preceding the DLL execution confirmed the 
+malware arrived inside an archive named to appear like a legitimate 
+EmberForge project review file.
+
+**Flag 15 — Dropped Payload:**  
+`rundll32.exe` dropped `update.exe` into `C:\Users\Public` shortly after 
+the initial DLL execution, which subsequently became the parent process 
+for all malicious activity across the environment.
+
+**Flag 16 — C2 Domain:**  
+DNS query events from `update.exe` consistently resolved 
+`cdn.cloud-endpoint.net`, confirming it as the C2 domain — sharing the 
+same base infrastructure as the staging server.
+
+**Flag 17 — Primary C2 IP:**  
+Parsing the QueryResults field of DNS events confirmed `104.21.30.237` 
+as the primary resolved IP, hosted behind Cloudflare to obscure the 
+attacker's true infrastructure.
+
+**Flag 18 — Injection Chain:**  
+CreateRemoteThread events confirmed `rundll32.exe` injected code into 
+`notepad.exe`, migrating malicious execution into a legitimate process 
+to evade detection.
+
+**Flag 19 — UAC Bypass Binary:**  
+Registry modifications to the `ms-settings\shell\open\command` key 
+identified the fodhelper UAC bypass technique, allowing the attacker 
+to elevate privileges without triggering a UAC prompt.
+
+**Flag 20 — Registry Bypass Enabler:**  
+The `DelegateExecute` value set immediately after the payload path 
+modification was the specific trigger that activates the fodhelper 
+bypass mechanism.
+
+**Flag 21 — Stable Injection Chain:**  
+After UAC bypass, `update.exe` injected into `spoolsv.exe` running as 
+`NT AUTHORITY\SYSTEM`, establishing a privileged stable foothold that 
+persisted across user sessions.
+
+**Flag 22 — Credential Dumping Process:**  
+File creation events revealed `update.exe` wrote `lsass.dmp` to disk 
+using direct syscalls to bypass API monitoring, evading traditional 
+LSASS access detection.
+
+**Flag 23 — Dump Location:**  
+The LSASS dump was written to `C:\Windows\System32\lsass.dmp`, 
+deliberately placed among legitimate system files to avoid detection 
+during manual review.
+
+**Flag 24 — User Enumeration:**  
+`net user /domain` was the first discovery command executed, querying 
+all domain accounts within minutes of initial infection confirming 
+scripted reconnaissance.
+
+**Flag 25 — Privilege Enumeration:**  
+Just 12 seconds after user enumeration, `net group "Domain Admins" 
+/domain` identified the highest privileged accounts in the domain, 
+confirming automated post-exploitation tooling.
+
+**Flag 26 — Infrastructure Mapping:**  
+`nltest /dclist:emberforge.local` completed a rapid three-command 
+reconnaissance sequence, locating the Domain Controllers before lateral 
+movement began.
+
+**Flag 27 — Tool Staging Share:**  
+The injected `spoolsv.exe` created a fully open network share pointing 
+to `C:\Users\Public`, establishing the workstation as a tool 
+distribution point for lateral movement.
+
+**Flag 28 — Firewall Manipulation:**  
+A firewall rule named `SMB` was added to allow inbound TCP port 445, 
+enabling the PsExec-style lateral movement that followed.
+
+**Flag 29 — Post-Escalation Parent:**  
+Every lateral movement command on the workstation had `spoolsv.exe` as 
+its parent process, confirming it as the stable SYSTEM-level execution 
+host after the UAC bypass.
+
+**Flag 30 — Beacon Distribution:**  
+`update.exe` was copied to the server via the C$ admin share, 
+distributing the primary implant without requiring another external 
+download.
+
+**Flag 31 — LOLBin Tool Staging:**  
+`certutil.exe` was abused as a download cradle to pull tools from 
+`sync.cloud-endpoint.net:8080`, a Living Off The Land technique that 
+bypasses application whitelisting controls.
+
+**Flag 32 — Remote Execution Evidence:**  
+The first randomly named service `MzLblBFm` on the server confirmed 
+PsExec-style lateral movement, identifiable by its random 8-character 
+name and batch file execution pattern.
+
+**Flag 33 — First Command on Server:**  
+`whoami` was the first command executed on the server, confirming the 
+consistent attacker pattern of verifying execution context immediately 
+upon compromising a new host.
+
+**Flag 34 — Failed Lateral Movement:**  
+Repeated NTLM authentication failures from the workstation IP confirmed 
+the attacker's initial lateral movement method was unreliable before 
+switching to PsExec-style execution.
+
+**Flag 35 — DC Arrival and Credential Extraction:**  
+The same `whoami` first-command pattern confirmed DC arrival, followed 
+immediately by `vssadmin.exe` beginning the shadow copy credential 
+extraction sequence.
+
+**Flag 36 — Backdoor Account:**  
+EventCode 4720 on the Domain Controller revealed the creation of 
+`svc_backup`, a backdoor account named to blend in with legitimate 
+service accounts.
+
+**Flag 37 — Backdoor Credentials:**  
+The `net user` command creating `svc_backup` passed the password 
+`P@ssw0rd123!` directly as a command line argument, permanently logging 
+it in Sysmon telemetry.
+
+**Flag 38 — Privilege Assignment:**  
+`svc_backup` was added to Domain Admins just 86 seconds after creation, 
+giving the attacker a persistent domain admin backdoor independent of 
+all other footholds.
+
+**Flag 39 — Exposed Credential:**  
+A network drive mapping command on the DC exposed the domain 
+Administrator password `EmberForge2024!` in plaintext, confirming the 
+attacker had successfully cracked credentials from the ntds.dit dump.
+
+**Flag 40 — Scheduled Task:**  
+A scheduled task named `WindowsUpdate` was created on both the 
+workstation and Domain Controller to run `update.exe` as SYSTEM on 
+startup, ensuring persistence across reboots.
+
+**Flag 41 — Remote Access Tool:**  
+AnyDesk was silently installed across multiple hosts and configured with 
+a custom unattended access password hash, providing the attacker a 
+persistent remote access channel independent of all other footholds.
+
+**Flag 42 — Remote Access Configuration:**  
+The AnyDesk configuration file at `C:\ProgramData\AnyDesk\system.conf` 
+was read and modified to enable unattended access, allowing the attacker 
+to connect without any user interaction.
+
+**Flag 43 — Anti-Forensics Tool:**  
+`wevtutil` was used to clear Security and System event logs on the 
+Domain Controller, confirming a deliberate attempt to destroy forensic 
+evidence before leaving.
+
+**Flag 44 — Cleared Logs:**  
+The Security and System logs were both targeted and cleared multiple 
+times, destroying authentication records and service installation events 
+— however Sysmon telemetry forwarded to Sentinel preserved the 
+evidence.
+
+---
+
+## Key Findings
+
+**Full Domain Compromise:**  
+The attacker achieved complete domain compromise by extracting `ntds.dit` from 
+the Domain Controller via volume shadow copy, obtaining the hashed credentials 
+of every account in the `emberforge.local` domain. The subsequent exposure of 
+the domain Administrator password `EmberForge2024!` in plaintext confirmed 
+successful offline credential cracking.
+
+**Targeted Attack Against a Specific Employee:**  
+The delivery of a malicious ISO file named to mimic a legitimate EmberForge 
+project review file confirms this was a targeted spearphishing attack against 
+`lmartin` specifically. The attacker had prior knowledge of EmberForge's internal 
+project naming conventions, suggesting pre-attack reconnaissance.
+
+**Proprietary Source Code Exfiltrated:**  
+The entire `C:\GameDev` directory was compressed and uploaded to MEGA cloud 
+storage via `rclone.exe`. The attacker's MEGA account `jwilson.vhr@proton.me` 
+and password `Summer2024!` were exposed in plaintext in Sysmon logs, providing 
+direct attribution evidence.
+
+**Three Hosts Fully Compromised:**  
+All three hosts in the `emberforge.local` environment were compromised — the 
+workstation `EC2AMAZ-B9GHHO6`, the server `EC2AMAZ-16V3AU4`, and the Domain 
+Controller `EC2AMAZ-EEU3IA2`. Each host had `update.exe` deployed, AnyDesk 
+installed, and a `WindowsUpdate` scheduled task created for persistent access.
+
+**Multiple Redundant Persistence Mechanisms:**  
+The attacker established at least five independent persistence mechanisms — the 
+`WindowsUpdate` scheduled task, the `svc_backup` backdoor domain admin account, 
+AnyDesk remote access on all three hosts, process injection into `spoolsv.exe`, 
+and the `ms-settings` registry modification. Rebuilding machines and resetting 
+passwords alone is insufficient without addressing all five mechanisms.
+
+**Anti-Forensics Attempted but Failed:**  
+The attacker cleared the Security and System event logs on the Domain Controller 
+using `wevtutil` in an attempt to destroy forensic evidence. However Sysmon 
+telemetry was forwarded to Microsoft Sentinel before the logs were cleared, 
+preserving the complete attack chain and allowing full reconstruction of the 
+incident.
+
+**Attacker Infrastructure Identified:**  
+Two attacker-controlled domains were identified — `cdn.cloud-endpoint.net` for 
+C2 communications and `sync.cloud-endpoint.net` for tool staging — both hosted 
+behind Cloudflare infrastructure to obscure the attacker's true origin. These 
+domains should be immediately blocked and submitted as IOCs for threat 
+intelligence sharing.
+
+**OPSEC Failures Provide Attribution Leads:**  
+The attacker made several significant OPSEC mistakes — exposing MEGA credentials 
+in command line arguments, passing the domain Administrator password in plaintext 
+in a `net use` command, and leaving attacker-controlled email addresses in rclone 
+configuration files. These mistakes provide actionable attribution evidence for 
+law enforcement engagement.
+
+---
+
+## MITRE ATT&CK Mapping
+
+
+---
+
+## Recommendations for Remediation
+
+### Immediate Actions (0-24 Hours)
+
+**Isolate Compromised Hosts:**  
+Immediately isolate all three hosts — `EC2AMAZ-B9GHHO6`, `EC2AMAZ-16V3AU4`, 
+and `EC2AMAZ-EEU3IA2` — from the network to prevent further lateral movement 
+or data exfiltration.
+
+**Disable Compromised Accounts:**  
+Immediately disable the backdoor account `svc_backup` and remove it from the 
+Domain Admins group. Treat the domain Administrator account as fully compromised 
+and reset its password immediately.
+
+**Reset All Domain Credentials:**  
+As `ntds.dit` was successfully extracted, all domain account passwords must be 
+reset — including service accounts, administrator accounts, and user accounts. 
+The krbtgt account password should be reset twice to invalidate all existing 
+Kerberos tickets.
+
+**Block Attacker Infrastructure:**  
+Block the following IOCs at the perimeter firewall and DNS level immediately:
+- `cdn.cloud-endpoint.net`
+- `sync.cloud-endpoint.net`
+- `104.21.30.237`
+- `172.67.174.46`
+- `66.203.125.15`
+- `jwilson.vhr@proton.me`
+
+**Remove Persistence Mechanisms:**  
+Delete the `WindowsUpdate` scheduled task on all hosts, uninstall AnyDesk from 
+all compromised hosts, and remove the `C:\ProgramData\AnyDesk` directory and 
+configuration files.
+
+---
+
+### Short Term Actions (24-72 Hours)
+
+**Rebuild Compromised Hosts:**  
+All three compromised hosts should be rebuilt from clean images. Do not attempt 
+to remediate in place as the depth of compromise makes it impossible to 
+guarantee full removal of all attacker tooling.
+
+**Remove Malicious Files:**  
+Ensure the following files are removed from all hosts before rebuilding:
+- `C:\Users\Public\update.exe`
+- `C:\Users\Public\rclone.exe`
+- `C:\Users\Public\rclone.conf`
+- `C:\Users\Public\gamedev.zip`
+- `C:\Users\Public\AnyDesk.exe`
+- `C:\Users\Public\af.exe`
+- `C:\Windows\System32\lsass.dmp`
+
+**Audit Domain Admin Group:**  
+Review all members of the Domain Admins group and remove any accounts that 
+should not have that level of access. Implement a formal process requiring 
+change management approval for any future Domain Admin group membership changes.
+
+**Notify Legal and Affected Parties:**  
+The exfiltration of `C:\GameDev` source code constitutes a data breach. Legal 
+should be notified immediately to begin breach notification procedures. Consider 
+notifying law enforcement given the attribution evidence available.
+
+---
+
+### Long Term Actions (1-4 Weeks)
+
+**Implement Email Filtering for ISO Attachments:**  
+Block or quarantine ISO, IMG, and VHD file attachments at the email gateway to 
+prevent future ISO-based delivery of malware. This directly addresses the initial 
+access vector used in this attack.
+
+**Deploy Application Whitelisting:**  
+Prevent execution of unsigned binaries from world-writable directories such as 
+`C:\Users\Public` by implementing application whitelisting via AppLocker or 
+Windows Defender Application Control.
+
+**Enable PowerShell Constrained Language Mode:**  
+Restrict PowerShell execution to constrained language mode to prevent abuse of 
+built-in cmdlets like `Compress-Archive` for malicious purposes.
+
+**Implement LSASS Protection:**  
+Enable LSA Protection and Credential Guard to prevent future LSASS memory 
+dumping attacks. This would have prevented the credential theft identified in 
+Flag 22.
+
+**Deploy Privileged Access Workstations:**  
+Require all Domain Admin activity to be performed from dedicated Privileged 
+Access Workstations that are isolated from standard user activity, reducing the 
+risk of credential theft from compromised endpoints.
+
+**Implement Tiered Administration:**  
+Adopt a tiered administration model separating Domain Admin, Server Admin, and 
+Workstation Admin credentials to limit the blast radius of future compromises.
+
+**Alert on High Fidelity IOCs:**  
+Implement the following detection rules in Microsoft Sentinel:
+- Random 8-character service name creation (EventCode 7045)
+- Execution from `C:\Users\Public` (EventCode 1)
+- `net share` commands creating open shares (EventCode 1)
+- `vssadmin` execution on Domain Controllers (EventCode 1)
+- New Domain Admin group membership additions (EventCode 4732)
+- `wevtutil cl` event log clearing commands (EventCode 1)
+- rclone execution with cloud storage arguments (EventCode 1)
+- AnyDesk installation from non-standard paths (EventCode 11)
+
+**Security Awareness Training:**  
+Provide targeted phishing awareness training to all staff with a focus on ISO 
+file delivery, social engineering techniques, and the risks of opening unexpected 
+attachments — directly addressing the initial access vector used against 
+`lmartin` in this incident.

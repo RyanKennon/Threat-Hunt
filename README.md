@@ -1,4 +1,4 @@
-# Threat Hunt: _Emberforge Source Leak_
+# Threat Hunt Report: _Emberforge Source Leak_
 
 ## Scenario
 

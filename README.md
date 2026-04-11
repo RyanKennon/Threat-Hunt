@@ -1,9 +1,18 @@
-# Threat-Hunt
+# Threat Hunt: _Emberforge Source Leak_
+
+## Scenario
+
+"We have a breach. EmberForge Studios, our game development subsidiary, has been compromised. Unreleased source code is on the dark web. Lead Artist Lisa Martin reported her workstation behaving strangely after opening _____ from her desktop."
+
+"I have a board meeting in 4 hours. Before I care about how they got in, I need to know what they took and where it went. Legal needs the scope for breach notification. The _____ team has already been notified. Get in the logs. Now."
+
+---
 
 ## Table of Contents
 
-[Platforms and Tools](#platforms-and-tools)  
 [Scenario](#scenario)  
+[Table of Contents](#table-of-contents)  
+[Platforms and Tools](#platforms-and-tools)   
 [Starting Point](#starting-point)  
 - [Flag 1: Target Directory – Source of Stolen Data](#flag-1-target-directory--source-of-stolen-data)
 - [Flag 2: Exfil Destination – Cloud Storage Provider](#flag-2-exfil-destination--cloud-storage-provider)
@@ -69,14 +78,6 @@
 - Sysmon Operational logs
 - Windows Security Event logs
 - Custom log table — EmberForgeX_CL
-
----
-
-## Scenario
-
-"We have a breach. EmberForge Studios, our game development subsidiary, has been compromised. Unreleased source code is on the dark web. Lead Artist Lisa Martin reported her workstation behaving strangely after opening _____ from her desktop."
-
-"I have a board meeting in 4 hours. Before I care about how they got in, I need to know what they took and where it went. Legal needs the scope for breach notification. The _____ team has already been notified. Get in the logs. Now."
 
 ---
 

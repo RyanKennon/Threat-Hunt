@@ -5,54 +5,54 @@
 [Platforms and Tools](#platforms-and-tools)  
 [Scenario](#scenario)  
 [Starting Point](#starting-point)  
-- [Flag 1: Target Directory – Source of Stolen Data](
-- [Flag 2: Exfil Destination – Cloud Storage Provider](
-- [Flag 3: Attacker Attribution – Authentication Email](
-- [Flag 4: Domain Compromise Evidence – Credential Database Access](
-- [Flag 5: Exfiltration Tool – Cloud Sync Abuse](
-- [Flag 6: Exfiltration Destination IP – Network Correlation](
-- [Flag 7: Attacker Credential Exposure – Plaintext Password](
-- [Flag 8: Archive Method – Living Off The Land Compression](
-- [Flag 9: Staging Server – Attacker Infrastructure](
-- [Flag 10: Malicious File – Initial Execution](
-- [Flag 11: Delivery Vector – Mounted Disk Image](
-- [Flag 12: Compromised User – Patient Zero](
-- [Flag 13: Execution Chain – Process Lineage](
-- [Flag 14: Delivery Unpacking – Archive Extraction](
-- [Flag 15: Dropped Payload – Primary Attack Tool](
-- [Flag 16: C2 Domain – Command and Control Infrastructure](
-- [Flag 17: Primary C2 IP – Resolved Address](
-- [Flag 18: Injection Chain – Process Injection for Defense Evasion](
-- [Flag 19: UAC Bypass Binary – Auto-Elevation Abuse](
-- [Flag 20: Registry Bypass Enabler – DelegateExecute Value](
-- [Flag 21: Stable Injection Chain – Elevated Process Injection](
-- [Flag 22: Credential Dumping Process – LSASS Memory Dump](
-- [Flag 23: Dump Location – LSASS Dump File Path](
-- [Flag 24: User Enumeration – Domain Account Discovery](
-- [Flag 25: Privilege Enumeration – Domain Admin Group Discovery](
-- [Flag 26: Infrastructure Mapping – Domain Controller Discovery](
-- [Flag 27: Tool Staging Share – Network Share Creation](
-- [Flag 28: Firewall Manipulation – Inbound SMB Rule](
-- [Flag 29: Post-Escalation Parent – Injected System Process](
-- [Flag 30: Beacon Distribution – Tool Transfer via Admin Share](
-- [Flag 31: LOLBin Tool Staging – Certutil Download Cradle](
-- [Flag 32: Remote Execution Evidence – Temporary Service Creation](
-- [Flag 33: First Command on Server – Initial Beacon Check](
-- [Flag 34: Failed Lateral Movement – NTLM Authentication Failures](
-- [Flag 35: DC Arrival and Credential Extraction – Domain Controller Compromise](
-- [Flag 36: Backdoor Account – Persistence via Fake Service Account](
-- [Flag 37: Backdoor Credentials – Plaintext Password Exposure](
-- [Flag 38: Privilege Assignment – Domain Admin Group Addition](
-- [Flag 39: Exposed Credential – Network Drive Mapping Password](
-- [Flag 40: Scheduled Task – Persistence via Fake Windows Update Task](
-- [Flag 41: Remote Access Tool – Silent AnyDesk Installation](
-- [Flag 42: Remote Access Configuration – AnyDesk Config File Path](
-- [Flag 43: Anti-Forensics Tool – Event Log Clearing](
-- [Flag 44: Cleared Logs – Event Log Targets](
-[Logical Flow & Analyst Reasoning](
-[MITRE ATT&CK Mapping](
-[Key Findings](
-[Recommendations for Remediation](
+- [Flag 1: Target Directory – Source of Stolen Data](#flag-1-target-directory--source-of-stolen-data)
+- [Flag 2: Exfil Destination – Cloud Storage Provider](#flag-2-exfil-destination--cloud-storage-provider)
+- [Flag 3: Attacker Attribution – Authentication Email](#flag-3-attacker-attribution--authentication-email)
+- [Flag 4: Domain Compromise Evidence – Credential Database Access](#flag-4-domain-compromise-evidence--credential-database-access)
+- [Flag 5: Exfiltration Tool – Cloud Sync Abuse](#flag-5-exfiltration-tool--cloud-sync-abuse)
+- [Flag 6: Exfiltration Destination IP – Network Correlation](#flag-6-exfiltration-destination-ip--network-correlation)
+- [Flag 7: Attacker Credential Exposure – Plaintext Password](#flag-7-attacker-credential-exposure--plaintext-password)
+- [Flag 8: Archive Method – Living Off The Land Compression](#flag-8-archive-method--living-off-the-land-compression)
+- [Flag 9: Staging Server – Attacker Infrastructure](#flag-9-staging-server--attacker-infrastructure)
+- [Flag 10: Malicious File – Initial Execution](#flag-10-malicious-file--initial-execution)
+- [Flag 11: Delivery Vector – Mounted Disk Image](#flag-11-delivery-vector--mounted-disk-image)
+- [Flag 12: Compromised User – Patient Zero](#flag-12-compromised-user--patient-zero)
+- [Flag 13: Execution Chain – Process Lineage](#flag-13-execution-chain--process-lineage)
+- [Flag 14: Delivery Unpacking – Archive Extraction](#flag-14-delivery-unpacking--archive-extraction)
+- [Flag 15: Dropped Payload – Primary Attack Tool](#flag-15-dropped-payload--primary-attack-tool)
+- [Flag 16: C2 Domain – Command and Control Infrastructure](#flag-16-c2-domain--command-and-control-infrastructure)
+- [Flag 17: Primary C2 IP – Resolved Address](#flag-17-primary-c2-ip--resolved-address)
+- [Flag 18: Injection Chain – Process Injection for Defense Evasion](#flag-18-injection-chain--process-injection-for-defense-evasion)
+- [Flag 19: UAC Bypass Binary – Auto-Elevation Abuse](#flag-19-uac-bypass-binary--auto-elevation-abuse)
+- [Flag 20: Registry Bypass Enabler – DelegateExecute Value](#flag-20-registry-bypass-enabler--delegateexecute-value)
+- [Flag 21: Stable Injection Chain – Elevated Process Injection](#flag-21-stable-injection-chain--elevated-process-injection)
+- [Flag 22: Credential Dumping Process – LSASS Memory Dump](#flag-22-credential-dumping-process--lsass-memory-dump)
+- [Flag 23: Dump Location – LSASS Dump File Path](#flag-23-dump-location--lsass-dump-file-path)
+- [Flag 24: User Enumeration – Domain Account Discovery](#flag-24-user-enumeration--domain-account-discovery)
+- [Flag 25: Privilege Enumeration – Domain Admin Group Discovery](#flag-25-privilege-enumeration--domain-admin-group-discovery)
+- [Flag 26: Infrastructure Mapping – Domain Controller Discovery](#flag-26-infrastructure-mapping--domain-controller-discovery)
+- [Flag 27: Tool Staging Share – Network Share Creation](#flag-27-tool-staging-share--network-share-creation)
+- [Flag 28: Firewall Manipulation – Inbound SMB Rule](#flag-28-firewall-manipulation--inbound-smb-rule)
+- [Flag 29: Post-Escalation Parent – Injected System Process](#flag-29-post-escalation-parent--injected-system-process)
+- [Flag 30: Beacon Distribution – Tool Transfer via Admin Share](#flag-30-beacon-distribution--tool-transfer-via-admin-share)
+- [Flag 31: LOLBin Tool Staging – Certutil Download Cradle](#flag-31-lolbin-tool-staging--certutil-download-cradle)
+- [Flag 32: Remote Execution Evidence – Temporary Service Creation](#flag-32-remote-execution-evidence--temporary-service-creation)
+- [Flag 33: First Command on Server – Initial Beacon Check](#flag-33-first-command-on-server--initial-beacon-check)
+- [Flag 34: Failed Lateral Movement – NTLM Authentication Failures](#flag-34-failed-lateral-movement--ntlm-authentication-failures)
+- [Flag 35: DC Arrival and Credential Extraction – Domain Controller Compromise](#flag-35-dc-arrival-and-credential-extraction--domain-controller-compromise)
+- [Flag 36: Backdoor Account – Persistence via Fake Service Account](#flag-36-backdoor-account--persistence-via-fake-service-account)
+- [Flag 37: Backdoor Credentials – Plaintext Password Exposure](#flag-37-backdoor-credentials--plaintext-password-exposure)
+- [Flag 38: Privilege Assignment – Domain Admin Group Addition](#flag-38-privilege-assignment--domain-admin-group-addition)
+- [Flag 39: Exposed Credential – Network Drive Mapping Password](#flag-39-exposed-credential--network-drive-mapping-password)
+- [Flag 40: Scheduled Task – Persistence via Fake Windows Update Task](#flag-40-scheduled-task--persistence-via-fake-windows-update-task)
+- [Flag 41: Remote Access Tool – Silent AnyDesk Installation](#flag-41-remote-access-tool--silent-anydesk-installation)
+- [Flag 42: Remote Access Configuration – AnyDesk Config File Path](#flag-42-remote-access-configuration--anydesk-config-file-path)
+- [Flag 43: Anti-Forensics Tool – Event Log Clearing](#flag-43-anti-forensics-tool--event-log-clearing)
+- [Flag 44: Cleared Logs – Event Log Targets](#flag-44-cleared-logs--event-log-targets)  
+[Logical Flow & Analyst Reasoning](#logical-flow--analyst-reasoning)  
+[MITRE ATT&CK Mapping](#mitre-attck-mapping)  
+[Key Findings](#key-findings)  
+[Recommendations for Remediation](#recommendations-for-remediation)  
 
 
 ---
@@ -70,6 +70,7 @@
 - Windows Security Event logs
 - Custom log table — EmberForgeX_CL
 
+---
 
 ## Scenario
 
@@ -79,7 +80,7 @@
 
 ---
 
-### Starting Point
+## Starting Point
 
 **Objective:**  
 Confirm access to the investigation environment by identifying the custom log table containing all Sysmon and Windows Security telemetry for the EmberForge investigation.
@@ -1927,6 +1928,38 @@ law enforcement engagement.
 
 ## MITRE ATT&CK Mapping
 
+| Tactic | Technique | ID |
+|---|---|---|
+| Initial Access | Phishing: Spearphishing Attachment | T1566.001 |
+| Initial Access | Phishing: Spearphishing via ISO | T1566 |
+| Execution | Signed Binary Proxy Execution: Rundll32 | T1218.011 |
+| Execution | Command and Scripting Interpreter: PowerShell | T1059.001 |
+| Execution | Command and Scripting Interpreter: Windows Command Shell | T1059.003 |
+| Execution | System Services: Service Execution | T1569.002 |
+| Persistence | Scheduled Task/Job: Scheduled Task | T1053.005 |
+| Persistence | Create Account: Domain Account | T1136.002 |
+| Persistence | Remote Access Software | T1219 |
+| Persistence | Boot or Logon Autostart Execution: Registry Run Keys | T1547.001 |
+| Privilege Escalation | Abuse Elevation Control Mechanism: Bypass UAC | T1548.002 |
+| Privilege Escalation | Process Injection: Remote Thread Injection | T1055.003 |
+| Defense Evasion | Process Injection: Remote Thread Injection | T1055.003 |
+| Defense Evasion | Masquerading: Match Legitimate Name or Location | T1036.005 |
+| Defense Evasion | Indicator Removal: Clear Windows Event Logs | T1070.001 |
+| Defense Evasion | Signed Binary Proxy Execution: Rundll32 | T1218.011 |
+| Defense Evasion | Obfuscated Files or Information | T1027 |
+| Credential Access | OS Credential Dumping: LSASS Memory | T1003.001 |
+| Credential Access | OS Credential Dumping: NTDS | T1003.003 |
+| Discovery | Account Discovery: Domain Account | T1087.002 |
+| Discovery | Permission Groups Discovery: Domain Groups | T1069.002 |
+| Discovery | Remote System Discovery | T1018 |
+| Lateral Movement | Remote Services: SMB/Windows Admin Shares | T1021.002 |
+| Lateral Movement | Remote Service Session Hijacking | T1563 |
+| Collection | Archive Collected Data: Archive via Utility | T1560.001 |
+| Command and Control | Application Layer Protocol: Web Protocols | T1071.001 |
+| Command and Control | Ingress Tool Transfer | T1105 |
+| Command and Control | Domain Fronting | T1090.004 |
+| Exfiltration | Exfiltration to Cloud Storage | T1567.002 |
+| Impact | Data Theft | T1565 |
 
 ---
 
